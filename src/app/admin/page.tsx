@@ -50,6 +50,7 @@ interface SiteConfig {
   Announcement: string;
   SearchDownstreamMaxPage: number;
   SiteInterfaceCacheTime: number;
+  ImageProxy: string;
 }
 
 // 视频源数据类型
@@ -79,7 +80,7 @@ const CollapsibleTab = ({
   children,
 }: CollapsibleTabProps) => {
   return (
-    <div className='rounded-xl shadow-sm mb-4 overflow-hidden bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700'>
+    <div className='rounded-xl shadow-xs mb-4 overflow-hidden bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700'>
       <button
         onClick={onToggle}
         className='w-full px-6 py-4 flex items-center justify-between bg-gray-50/70 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-700/60 transition-colors'
@@ -307,7 +308,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
               toggleAllowRegister(!userSettings.enableRegistration)
             }
             disabled={isD1Storage}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-hidden focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
               userSettings.enableRegistration
                 ? 'bg-green-600'
                 : 'bg-gray-200 dark:bg-gray-700'
@@ -424,7 +425,7 @@ const UserConfig = ({ config, role, refreshConfig }: UserConfigProps) => {
         )}
 
         {/* 用户列表 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto'>
+        <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-112 overflow-y-auto overflow-x-auto'>
           <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
             <thead className='bg-gray-50 dark:bg-gray-900'>
               <tr>
@@ -757,18 +758,18 @@ const VideoSourceConfig = ({
           {source.key}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-48 truncate'
           title={source.api}
         >
           {source.api}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-32 truncate'
           title={source.detail || '-'}
         >
           {source.detail || '-'}
         </td>
-        <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
+        <td className='px-6 py-4 whitespace-nowrap max-w-4'>
           <span
             className={`px-2 py-1 text-xs rounded-full ${
               !source.disabled
@@ -879,7 +880,7 @@ const VideoSourceConfig = ({
       )}
 
       {/* 视频源表格 */}
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto'>
+      <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-112 overflow-y-auto overflow-x-auto'>
         <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
           <thead className='bg-gray-50 dark:bg-gray-900'>
             <tr>
@@ -947,6 +948,7 @@ const SiteConfigComponent = ({ config }: { config: AdminConfig | null }) => {
     Announcement: '',
     SearchDownstreamMaxPage: 1,
     SiteInterfaceCacheTime: 7200,
+    ImageProxy: '',
   });
   // 保存状态
   const [saving, setSaving] = useState(false);
@@ -958,7 +960,10 @@ const SiteConfigComponent = ({ config }: { config: AdminConfig | null }) => {
 
   useEffect(() => {
     if (config?.SiteConfig) {
-      setSiteSettings(config.SiteConfig);
+      setSiteSettings({
+        ...config.SiteConfig,
+        ImageProxy: config.SiteConfig.ImageProxy || '',
+      });
     }
   }, [config]);
 
@@ -1090,6 +1095,41 @@ const SiteConfigComponent = ({ config }: { config: AdminConfig | null }) => {
           }
           className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
         />
+      </div>
+
+      {/* 图片代理 */}
+      <div>
+        <label
+          className={`block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 ${
+            isD1Storage ? 'opacity-50' : ''
+          }`}
+        >
+          图片代理前缀
+          {isD1Storage && (
+            <span className='ml-2 text-xs text-gray-500 dark:text-gray-400'>
+              (D1 环境下不可修改)
+            </span>
+          )}
+        </label>
+        <input
+          type='text'
+          placeholder='例如: https://imageproxy.example.com/?url='
+          value={siteSettings.ImageProxy}
+          onChange={(e) =>
+            !isD1Storage &&
+            setSiteSettings((prev) => ({
+              ...prev,
+              ImageProxy: e.target.value,
+            }))
+          }
+          disabled={isD1Storage}
+          className={`w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+            isD1Storage ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        />
+        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          用于代理图片访问，解决跨域或访问限制问题。留空则不使用代理。
+        </p>
       </div>
 
       {/* 操作按钮 */}
